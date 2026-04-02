@@ -62,7 +62,12 @@ DOCKER_IMAGE_TAG="${DOCKER_IMAGE_TAG:-llama-swap:unified-${BACKEND}}"
 LLAMA_REPO="https://github.com/ggml-org/llama.cpp.git"
 WHISPER_REPO="https://github.com/ggml-org/whisper.cpp.git"
 SD_REPO="https://github.com/leejet/stable-diffusion.cpp.git"
-LLAMA_SWAP_REPO="https://github.com/mostlygeek/llama-swap.git"
+LLAMA_SWAP_REPO="${LLAMA_SWAP_REPO:-https://github.com/mostlygeek/llama-swap.git}"
+# Normalize: if user passed "org/repo" without full URL, expand it
+if [[ ! "${LLAMA_SWAP_REPO}" =~ ^https?:// ]]; then
+    LLAMA_SWAP_REPO_SLUG="${LLAMA_SWAP_REPO}"
+    LLAMA_SWAP_REPO="https://github.com/${LLAMA_SWAP_REPO}.git"
+fi
 
 # Resolve a git ref (commit hash, tag, or branch) to a full commit hash.
 # Requires only: git, network access to the remote.
@@ -179,6 +184,7 @@ BUILD_ARGS=(
     --build-arg "WHISPER_COMMIT_HASH=${WHISPER_HASH}"
     --build-arg "SD_COMMIT_HASH=${SD_HASH}"
     --build-arg "LS_VERSION=${LS_HASH}"
+    --build-arg "LLAMA_SWAP_REPO=${LLAMA_SWAP_REPO_SLUG:-mostlygeek/llama-swap}"
     -t "${DOCKER_IMAGE_TAG}"
     -f "${SCRIPT_DIR}/Dockerfile"
 )
