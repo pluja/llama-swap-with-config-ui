@@ -82,6 +82,8 @@ RUN --mount=type=cache,id=ccache-${BACKEND},target=/ccache \
 
 FROM builder-base AS llama-swap-download
 ARG LS_VERSION=latest
+ARG LLAMA_SWAP_REPO=mostlygeek/llama-swap
+ENV LLAMA_SWAP_REPO=${LLAMA_SWAP_REPO}
 COPY install-llama-swap.sh /build/
 RUN bash /build/install-llama-swap.sh "${LS_VERSION}"
 

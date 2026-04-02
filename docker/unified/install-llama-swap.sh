@@ -5,7 +5,7 @@
 set -e
 
 VERSION="${1:-latest}"
-REPO="mostlygeek/llama-swap"
+REPO="${LLAMA_SWAP_REPO:-mostlygeek/llama-swap}"
 
 mkdir -p /install/bin
 
