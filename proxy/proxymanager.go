@@ -90,6 +90,9 @@ type ProxyManager struct {
 
 	// peer proxy see: #296, #433
 	peerProxy *PeerProxy
+
+	configPath string
+	modelsDir  string
 }
 
 func New(proxyConfig config.Config) *ProxyManager {
@@ -427,6 +430,7 @@ func (pm *ProxyManager) setupGinEngine() {
 	// see: proxymanager_api.go
 	// add API handler functions
 	addApiHandlers(pm)
+	addConfigApiHandlers(pm)
 
 	// Disable console color for testing
 	gin.DisableConsoleColor()
@@ -1087,4 +1091,11 @@ func (pm *ProxyManager) SetVersion(buildDate string, commit string, version stri
 	pm.buildDate = buildDate
 	pm.commit = commit
 	pm.version = version
+}
+
+func (pm *ProxyManager) SetConfigPath(configPath string, modelsDir string) {
+	pm.Lock()
+	defer pm.Unlock()
+	pm.configPath = configPath
+	pm.modelsDir = modelsDir
 }

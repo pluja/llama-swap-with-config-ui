@@ -33,6 +33,7 @@ func main() {
 	keyFile := flag.String("tls-key-file", "", "TLS key file")
 	showVersion := flag.Bool("version", false, "show version of build")
 	watchConfig := flag.Bool("watch-config", false, "Automatically reload config file on change")
+	modelsDir := flag.String("models-dir", "", "Directory containing model files for browsing in config editor")
 
 	flag.Parse() // Parse the command-line flags
 
@@ -97,6 +98,7 @@ func main() {
 			currentPM.Shutdown()
 			newPM := proxy.New(conf)
 			newPM.SetVersion(date, commit, version)
+			newPM.SetConfigPath(*configPath, *modelsDir)
 			srv.Handler = newPM
 			fmt.Println("Configuration Reloaded")
 
@@ -114,6 +116,7 @@ func main() {
 			}
 			newPM := proxy.New(conf)
 			newPM.SetVersion(date, commit, version)
+			newPM.SetConfigPath(*configPath, *modelsDir)
 			srv.Handler = newPM
 		}
 	}
@@ -121,13 +124,14 @@ func main() {
 	// load the initial proxy manager
 	reloadProxyManager()
 	debouncedReload := debounce(time.Second, reloadProxyManager)
-	if *watchConfig {
-		defer event.On(func(e proxy.ConfigFileChangedEvent) {
-			if e.ReloadingState == proxy.ReloadingStateStart {
-				debouncedReload()
-			}
-		})()
 
+	defer event.On(func(e proxy.ConfigFileChangedEvent) {
+		if e.ReloadingState == proxy.ReloadingStateStart {
+			debouncedReload()
+		}
+	})()
+
+	if *watchConfig {
 		fmt.Println("Watching Configuration for changes")
 		go func() {
 			absConfigPath, err := filepath.Abs(*configPath)
