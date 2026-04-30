@@ -116,22 +116,33 @@ get_latest_hash() {
     git ls-remote "${1}" HEAD 2>/dev/null | head -1 | cut -f1
 }
 
+get_latest_release_tag() {
+    curl -fsSL "https://api.github.com/repos/${1}/releases/latest" 2>/dev/null \
+        | grep '"tag_name"' | head -1 | cut -d'"' -f4
+}
+
 echo "=========================================="
 echo "llama-swap Unified Build (${BACKEND})"
 echo "=========================================="
 echo ""
 
-# Resolve llama.cpp ref
+# Resolve llama.cpp ref (defaults to latest release, not HEAD)
 if [[ -n "${LLAMA_REF:-}" ]]; then
     LLAMA_HASH=$(resolve_ref "${LLAMA_REPO}" "${LLAMA_REF}") || exit 1
     echo "llama.cpp: ${LLAMA_REF} -> ${LLAMA_HASH}"
 else
-    LLAMA_HASH=$(get_latest_hash "${LLAMA_REPO}")
-    if [[ -z "${LLAMA_HASH}" ]]; then
-        echo "ERROR: Could not determine latest commit for llama.cpp" >&2
-        exit 1
+    LLAMA_RELEASE_TAG=$(get_latest_release_tag "ggml-org/llama.cpp")
+    if [[ -n "${LLAMA_RELEASE_TAG}" ]]; then
+        LLAMA_HASH=$(resolve_ref "${LLAMA_REPO}" "${LLAMA_RELEASE_TAG}") || exit 1
+        echo "llama.cpp: latest release ${LLAMA_RELEASE_TAG} -> ${LLAMA_HASH}"
+    else
+        LLAMA_HASH=$(get_latest_hash "${LLAMA_REPO}")
+        if [[ -z "${LLAMA_HASH}" ]]; then
+            echo "ERROR: Could not determine latest commit for llama.cpp" >&2
+            exit 1
+        fi
+        echo "llama.cpp: latest HEAD (no release found): ${LLAMA_HASH}"
     fi
-    echo "llama.cpp: latest HEAD: ${LLAMA_HASH}"
 fi
 
 # Resolve whisper.cpp ref
